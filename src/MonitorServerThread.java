@@ -14,14 +14,12 @@ import java.sql.Statement;
 public class MonitorServerThread implements Runnable{
 
     //创建对象
-    private String threadName;
     private Statement statement;
     private Socket socket;
 
     //构造函数完成初始化类
-    MonitorServerThread(String threadName, Statement statement, Socket socket){
-        this.threadName=threadName;
-        this.statement=statement;
+    MonitorServerThread(Statement statement, Socket socket){
+        this.statement = statement;
         this.socket=socket;
     }
 
@@ -39,13 +37,10 @@ public class MonitorServerThread implements Runnable{
             BufferedReader bufferedReader=new BufferedReader(inputStreamReader);//缓存输入流
             String message; //消息字符串
             while ((message=bufferedReader.readLine())!=null){
-                System.out.println(message);//输出接收到的原消息
                 splitMessage =  message.split("#"); //调用split()方法以“#”拆分若干段
                 T_SQL="INSERT INTO data_table(device_ID,digital,analog) VALUES('"
                         +splitMessage[0]+"','"+splitMessage[1]+"','"+splitMessage[2]+"')";  //拼接T-SQL语句
-                if(statement.executeUpdate(T_SQL)!=0){  //执行T-SQL语句，执行成功返回不为NULL
-                    System.out.println(threadName+ "成功添加！");
-                }
+                statement.executeUpdate(T_SQL);//执行T-SQL语句，执行成功返回不为NULL
             }
         } catch (IOException | SQLException e) {
             e.printStackTrace();

@@ -40,7 +40,7 @@ public class MonitorServer {
             //连接数据库对象实例化
             connection = DriverManager.getConnection(url,user,password);
             if (connection != null){
-                System.out.println("连接成功！");
+                System.out.println("数据库连接成功！");
             }
             //获取statement数据库操作实例
             if (connection != null) {
@@ -49,13 +49,11 @@ public class MonitorServer {
             //serverSocket实例绑定6000端口
             serverSocket = new ServerSocket(60000);
 
-            while (true) {
-                for (int i=0;i<30;i++) {
-                    //启动侦听并进入阻塞状态
-                    socket = serverSocket.accept();
-                    //启动线程
-                    threadPoolExecutor.execute(new MonitorServerThread("thread" + (i + 1), statement, socket));
-                }
+            while (statement!=null) {
+                //启动侦听并进入阻塞状态
+                socket = serverSocket.accept();
+                //启动线程
+                threadPoolExecutor.execute(new MonitorServerThread(statement, socket));
             }
 
         } catch (ClassNotFoundException | SQLException | IOException e) {
