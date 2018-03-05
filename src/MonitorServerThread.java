@@ -10,7 +10,7 @@ import java.sql.Statement;
  * Created by Grim on 2017-02-19.
  */
 
-//创建单线程类，继承Runnable接口
+//创建独立线程类，继承Runnable接口
 public class MonitorServerThread implements Runnable{
 
     //创建对象
@@ -31,25 +31,26 @@ public class MonitorServerThread implements Runnable{
 
         String T_SQL;   //T-SQL语句字符串
         String[] splitMessage;  //存储拆分消息字符串数组
-        try {
-            InputStream inputStream = socket.getInputStream();//创建输入流对象
-            InputStreamReader inputStreamReader=new InputStreamReader(inputStream);//读取输入流，注：一次读取一行，发送时必须要换行
-            BufferedReader bufferedReader=new BufferedReader(inputStreamReader);//缓存输入流
-            String message; //消息字符串
-            while ((message=bufferedReader.readLine())!=null){
-                splitMessage =  message.split("#"); //调用split()方法以“#”拆分若干段
+        String message; //消息字符串
+        try (//创建输入流对象
+             InputStream inputStream = socket.getInputStream();
+             //读取输入流，注：一次读取一行，发送时必须要换行
+             InputStreamReader inputStreamReader=new InputStreamReader(inputStream);
+             //缓存输入流
+             BufferedReader bufferedReader=new BufferedReader(inputStreamReader)){
+
+            while (//循环读取行
+                    (message=bufferedReader.readLine())!=null){
+                //调用split()方法以“#”拆分若干段
+                splitMessage =  message.split("#");
+                //拼接T-SQL语句
                 T_SQL="INSERT INTO data_table(device_ID,digital,analog) VALUES('"
-                        +splitMessage[0]+"','"+splitMessage[1]+"','"+splitMessage[2]+"')";  //拼接T-SQL语句
-                statement.executeUpdate(T_SQL);//执行T-SQL语句，执行成功返回不为NULL
+                        +splitMessage[0]+"','"+splitMessage[1]+"','"+splitMessage[2]+"')";
+                //执行T-SQL语句，执行成功返回不为NULL
+                statement.executeUpdate(T_SQL);
             }
         } catch (IOException | SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                socket.close(); //关闭socket资源
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 }

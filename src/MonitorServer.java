@@ -1,4 +1,4 @@
-//导入外部jar包
+//导入jar包
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -24,59 +24,32 @@ public class MonitorServer {
     public static void main(String[] args) {
         //创建线程池等待任务队列，数量10
         BlockingQueue<Runnable> blockingQueue=new ArrayBlockingQueue<>(10);
-        //创建线程池，基本线程5个，最大20个，存活时间2分钟，源自于等待任务队列
+        //创建线程池，基本线程5个，最大20个，存活时间2分钟
         ThreadPoolExecutor threadPoolExecutor=new ThreadPoolExecutor(
                 5,20,2, TimeUnit.MINUTES ,blockingQueue);
-
-        //创建对象
-        Connection connection =null;
-        ServerSocket serverSocket=null;
-        Socket socket=null;
-        Statement statement=null;
 
         try {
             //反射加载驱动
             Class.forName("com.mysql.jdbc.Driver");
-            //连接数据库对象实例化
-            connection = DriverManager.getConnection(url,user,password);
-            if (connection != null){
-                System.out.println("数据库连接成功！");
-            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        try(//连接数据库对象实例化
+            Connection connection = DriverManager.getConnection(url,user,password);
             //获取statement数据库操作实例
-            if (connection != null) {
-                statement= connection.createStatement();
-            }
+            Statement statement= connection.createStatement();
             //serverSocket实例绑定6000端口
-            serverSocket = new ServerSocket(60000);
+            ServerSocket serverSocket = new ServerSocket(60000)) {
 
-            while (statement!=null) {
+            while (statement != null) {
                 //启动侦听并进入阻塞状态
-                socket = serverSocket.accept();
+                Socket socket = serverSocket.accept();
                 //启动线程
                 threadPoolExecutor.execute(new MonitorServerThread(statement, socket));
             }
 
-        } catch (ClassNotFoundException | SQLException | IOException e) {
+        } catch (SQLException | IOException e) {
             e.printStackTrace();
-        } finally {
-            //关闭相关资源
-            try {
-                if (socket != null) {
-                    socket.close();
-                }
-                if (serverSocket != null) {
-                    serverSocket.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-                threadPoolExecutor.shutdown();
-            } catch (IOException | SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 }
